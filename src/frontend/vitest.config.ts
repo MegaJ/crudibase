@@ -8,6 +8,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    exclude: ['node_modules/**', 'dist/**', '__tests__/e2e/**', '**/*.spec.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -16,17 +17,17 @@ export default defineConfig({
         '__tests__/',
         'dist/',
         '*.config.ts',
-        'src/test/'
+        'src/test/',
       ],
       lines: 80,
       functions: 80,
       branches: 75,
-      statements: 80
-    }
+      statements: 80,
+    },
   },
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 });
