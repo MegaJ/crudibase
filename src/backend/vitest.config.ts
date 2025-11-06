@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    env: {
+      NODE_ENV: 'test',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -12,12 +15,12 @@ export default defineConfig({
         '__tests__/',
         'dist/',
         '*.config.ts',
-        'scripts/'
+        'scripts/',
       ],
       lines: 80,
       functions: 80,
       branches: 75,
-      statements: 80
-    }
-  }
+      statements: 80,
+    },
+  },
 });

@@ -2,16 +2,25 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const DATABASE_PATH = process.env.DATABASE_PATH || './data/crudibase.db';
+/**
+ * Get database path (read from environment each time)
+ */
+function getDatabasePath(): string {
+  return process.env.DATABASE_PATH || './data/crudibase.db';
+}
 
 /**
  * Initialize SQLite database connection
  */
 export function initDatabase(): Database.Database {
-  // Ensure data directory exists
-  const dbDir = path.dirname(DATABASE_PATH);
-  if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
+  const DATABASE_PATH = getDatabasePath();
+
+  // Ensure data directory exists (skip for :memory: databases)
+  if (DATABASE_PATH !== ':memory:') {
+    const dbDir = path.dirname(DATABASE_PATH);
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
+    }
   }
 
   const db = new Database(DATABASE_PATH);
@@ -165,12 +174,23 @@ export function runMigrations(db: Database.Database): void {
  * Get database instance (singleton)
  */
 let dbInstance: Database.Database | null = null;
+let currentDbPath: string | null = null;
 
 export function getDatabase(): Database.Database {
-  if (!dbInstance) {
+  const dbPath = getDatabasePath();
+
+  // If database path changed or no instance exists, create new instance
+  if (!dbInstance || currentDbPath !== dbPath) {
+    // Close existing instance if it exists
+    if (dbInstance) {
+      dbInstance.close();
+    }
+
     dbInstance = initDatabase();
     runMigrations(dbInstance);
+    currentDbPath = dbPath;
   }
+
   return dbInstance;
 }
 
@@ -181,5 +201,6 @@ export function closeDatabase(): void {
   if (dbInstance) {
     dbInstance.close();
     dbInstance = null;
+    currentDbPath = null;
   }
 }
