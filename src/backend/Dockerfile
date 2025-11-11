@@ -35,6 +35,7 @@ FROM node:22-alpine AS production
 # Install runtime dependencies
 RUN apk add --no-cache \
     sqlite \
+    wget \
     dumb-init
 
 WORKDIR /app
