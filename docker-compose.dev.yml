@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # Backend API service with hot reload
+  backend:
+    build:
+      context: .
+      dockerfile: src/backend/Dockerfile
+      target: base  # Use base stage, not production
+    container_name: crudibase-backend-dev
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - JWT_SECRET=dev-secret-change-in-production
+      - JWT_EXPIRES_IN=1h
+      - DATABASE_PATH=/app/src/backend/data/crudibase.db
+    volumes:
+      # Mount source code for hot reload
+      - ./src/backend/src:/app/src/backend/src:ro
+      - ./src/backend/package.json:/app/src/backend/package.json:ro
+      - ./src/backend/tsconfig.json:/app/src/backend/tsconfig.json:ro
+      # Persist database in development
+      - ./src/backend/data:/app/src/backend/data
+      # Use named volume for node_modules (avoid overwriting)
+      - backend-node-modules:/app/src/backend/node_modules
+    networks:
+      - crudibase-network
+    command: ["npm", "run", "dev", "--workspace=src/backend"]
+
+  # Frontend React app with Vite hot reload
+  frontend:
+    image: node:22-alpine
+    container_name: crudibase-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+    volumes:
+      # Mount source code for hot reload
+      - ./src/frontend:/app/src/frontend
+      - ./package.json:/app/package.json:ro
+      # Use named volume for node_modules
+      - frontend-node-modules:/app/src/frontend/node_modules
+    working_dir: /app/src/frontend
+    networks:
+      - crudibase-network
+    depends_on:
+      - backend
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  backend-node-modules:
+  frontend-node-modules:
+
+networks:
+  crudibase-network:
+    driver: bridge
